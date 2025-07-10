@@ -1,0 +1,423 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <title>Manajemen Keuangan</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    body {
+      display: flex;
+      min-height: 100vh;
+      background-color: #e9ecef;
+      font-family: 'Segoe UI', sans-serif;
+    }
+
+    .sidebar {
+      width: 240px;
+      background-color: #343a40;
+      color: #fff;
+      padding: 30px 20px;
+      transition: all 0.3s ease;
+    }
+
+    .sidebar h4 {
+      font-size: 24px;
+      margin-bottom: 40px;
+      font-weight: bold;
+      color: #ffc107;
+    }
+
+    .nav-link {
+      color: #adb5bd;
+      padding: 12px 10px;
+      display: flex;
+      align-items: center;
+      border-radius: 6px;
+      transition: all 0.2s;
+      font-size: 16px;
+    }
+
+    .nav-link:hover, .nav-link.active {
+      color: #fff;
+      background-color: #495057;
+    }
+
+    .nav-link i {
+      margin-right: 10px;
+    }
+
+    .content {
+      flex: 1;
+      padding: 40px;
+    }
+
+    .card {
+      border-radius: 10px;
+    }
+
+    .table th {
+      white-space: nowrap;
+    }
+
+    .btn-custom {
+      background-color: #007bff;
+      color: white;
+    }
+
+    .btn-custom:hover {
+      background-color: #0056b3;
+    }
+
+    .modal-header {
+      background-color: #007bff;
+      color: white;
+    }
+
+    .modal-footer .btn {
+      background-color: #28a745;
+      color: white;
+    }
+
+    .modal-footer .btn:hover {
+      background-color: #218838;
+    }
+  </style>
+</head>
+<body>
+
+    <!-- Sidebar -->
+    <div class="sidebar">
+        <h4>Manajemen Keuangan</h4>
+        <a href="#" class="nav-link" id="navDashboard">Dashboard</a>
+        <a href="#" class="nav-link" id="navTransaksi">Transaksi</a>
+        <a href="#" class="nav-link" id="navKeluar">Keluar</a>
+    </div>
+
+    <!-- Dashboard -->
+    <div id="dashboardContent" class="content" style="display: block;">
+    <h2 class="mb-4">Dashboard</h2>
+
+    <div class="row mb-4">
+        <div class="col-md-6 col-lg-4">
+        <div class="card border-success shadow-sm">
+            <div class="card-body text-center">
+            <h6 class="text-success">Total Pemasukan</h6>
+            <h5 id="totalIncome">Rp 0</h5>
+            </div>
+        </div>
+        </div>
+        <div class="col-md-6 col-lg-4">
+        <div class="card border-danger shadow-sm">
+            <div class="card-body text-center">
+            <h6 class="text-danger">Total Pengeluaran</h6>
+            <h5 id="totalExpense">Rp 0</h5>
+            </div>
+        </div>
+        </div>
+    </div>
+
+    <div class="card shadow-sm mb-4">
+        <div class="card-body">
+        <h6 class="mb-3">Grafik Transaksi Bulanan</h6>
+        <canvas id="grafikTransaksi" height="100"></canvas>
+        </div>
+    </div>
+    </div>
+
+    <!-- Transaksi -->
+    <div id="transaksiContent" class="content" style="display: none;">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2>Manajemen Transaksi</h2>
+        <div>
+        <button class="btn btn-custom me-2" onclick="showForm()">+ Tambah Transaksi</button>
+        <button class="btn btn-outline-danger me-1" onclick="exportPDF()">Export PDF</button>
+        <button class="btn btn-outline-success" onclick="exportExcel()">Export Excel</button>
+        </div>
+    </div>
+
+    <div class="card p-3 mb-4 shadow-sm">
+        <div class="row g-2">
+        <div class="col-md-3">
+            <input type="month" class="form-control" id="filterMonth">
+        </div>
+        <div class="col-md-3">
+            <select class="form-select" id="filterType">
+            <option value="">Semua Tipe</option>
+            <option value="income">Pemasukan</option>
+            <option value="expense">Pengeluaran</option>
+            </select>
+        </div>
+        </div>
+    </div>
+
+    <div class="table-responsive">
+        <table class="table table-bordered table-hover align-middle">
+        <thead class="table-dark">
+            <tr>
+            <th>Tanggal</th>
+            <th>Kategori</th>
+            <th>Deskripsi</th>
+            <th>Jumlah</th>
+            <th style="width: 120px;">Aksi</th>
+            </tr>
+        </thead>
+        <tbody id="transaksiBody">
+            <!-- Data dimuat lewat JS -->
+        </tbody>
+        </table>
+    </div>
+    </div>
+
+    <div class="modal fade" id="transaksiModal" tabindex="-1">
+    <div class="modal-dialog">
+        <form class="modal-content" id="formTransaksi">
+        <div class="modal-header">
+            <h5 class="modal-title">Tambah Transaksi</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+            <input type="date" class="form-control mb-3" name="date" required>
+            <input type="text" class="form-control mb-3" name="description" placeholder="Deskripsi" required>
+            <input type="number" class="form-control mb-3" name="amount" placeholder="Jumlah" required>
+            <select class="form-select mb-3" name="category_id" required>
+            <option value="">Pilih Kategori</option>
+            <option value="1">Penjualan Produk</option>
+            <option value="2">Investasi</option>
+            <option value="3">Operasional</option>
+            <option value="4">Pemasaran</option>
+            </select>
+        </div>
+        <div class="modal-footer">
+            <button type="submit" class="btn btn-success">Simpan</button>
+        </div>
+        </form>
+    </div>
+    </div>
+
+
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+    // Inisialisasi modal Bootstrap
+    const transaksiModal = new bootstrap.Modal(document.getElementById('transaksiModal'));
+    const form = document.getElementById('formTransaksi');
+
+    // Navigasi antar halaman
+    document.querySelectorAll('.nav-link').forEach(link => {
+    link.addEventListener('click', function(e) {
+        e.preventDefault();
+        document.querySelectorAll('.content').forEach(c => c.style.display = 'none');
+        document.querySelectorAll('.nav-link').forEach(l => l.classList.remove('active'));
+        this.classList.add('active');
+
+        const text = this.textContent.trim().toLowerCase();
+        if (text === 'dashboard') {
+        document.getElementById('dashboardContent').style.display = 'block';
+        loadSummary(); loadChart();
+        } else if (text === 'transaksi') {
+        document.getElementById('transaksiContent').style.display = 'block';
+        applyFilters();
+        } else if (text === 'keluar') {
+        if (confirm("Yakin ingin logout?")) {
+            localStorage.removeItem("user");
+            window.location.href = "/login"; 
+        }
+        }
+    });
+    });
+
+    // Load transaksi dan aktifkan filter saat halaman dimuat
+    document.addEventListener("DOMContentLoaded", () => {
+        fetchTransactions(); // awal tanpa filter
+        setupFilterListeners();
+    });
+
+    // Ambil transaksi dengan filter (bulan, tipe)
+    function fetchTransactions(month = "", tipe = "") {
+        let query = [];
+        if (month) query.push(`month=${month}`);
+        if (tipe) query.push(`type=${tipe}`);
+        const url = query.length ? `/transactions?${query.join("&")}` : "/transactions";
+
+        fetch(url)
+        .then(res => res.json())
+        .then(data => {
+            const tbody = document.getElementById("transaksiBody");
+            tbody.innerHTML = "";
+
+            data.forEach(tx => {
+            const kategori = tx.category?.name || "—";
+            const tanggal = tx.date?.substring(0, 10) || "-";
+            const jumlah = tx.amount?.toLocaleString("id-ID") || "0";
+
+            const row = `<tr>
+                <td>${tanggal}</td>
+                <td>${kategori}</td>
+                <td>${tx.description || ""}</td>
+                <td>Rp ${jumlah}</td>
+                <td>
+                <button class="btn btn-sm btn-warning" onclick="showEditForm(${tx.id})">Edit</button>
+                <button class="btn btn-sm btn-danger" onclick="hapusTransaksi(${tx.id})">Hapus</button>
+                </td>
+            </tr>`;
+            tbody.innerHTML += row;
+            });
+        })
+        .catch(err => console.error("Gagal ambil transaksi:", err));
+    }
+
+    // Setup listener filter
+    function setupFilterListeners() {
+        document.getElementById("filterMonth").addEventListener("change", applyFilters);
+        document.getElementById("filterType").addEventListener("change", applyFilters);
+    }
+
+    // Ambil nilai filter dan refresh data
+    function applyFilters() {
+        const month = document.getElementById("filterMonth").value;
+        const tipe = document.getElementById("filterType").value;
+        fetchTransactions(month, tipe);
+    }
+
+    //  Hapus transaksi
+    function hapusTransaksi(id) {
+        if (confirm("Yakin ingin menghapus transaksi ini?")) {
+        fetch(`/transactions/${id}`, { method: "DELETE" })
+            .then(() => applyFilters())
+            .catch(err => console.error("Gagal hapus transaksi:", err));
+        }
+    }
+
+    //  Tampilkan form edit dan isi data transaksi
+    function showEditForm(id) {
+        fetch(`/transactions/${id}`)
+        .then(res => res.json())
+        .then(tx => {
+            form.date.value = tx.date?.substring(0, 10) || "";
+            form.description.value = tx.description || "";
+            form.amount.value = tx.amount || "";
+            form.category_id.value = tx.category_id;
+            form.dataset.id = tx.id;
+            transaksiModal.show();
+        })
+        .catch(err => console.error("Gagal ambil detail transaksi:", err));
+    }
+
+    function exportPDF() {
+        const month = document.getElementById("filterMonth").value;
+        const type = document.getElementById("filterType").value;
+        window.open(`/export/pdf?month=${month}&type=${type}`, "_blank");
+    }
+
+    function exportExcel() {
+        const month = document.getElementById("filterMonth").value;
+        const type = document.getElementById("filterType").value;
+        window.open(`/export/excel?month=${month}&type=${type}`, "_blank");
+    }
+
+    //  Tampilkan form untuk tambah transaksi
+    function showForm() {
+        form.reset();
+        delete form.dataset.id;
+        transaksiModal.show();
+    }
+
+    //  Handle submit form untuk tambah / edit transaksi
+    form.addEventListener("submit", function (e) {
+        e.preventDefault();
+
+        const data = {
+        date: form.date.value,
+        description: form.description.value,
+        amount: parseFloat(form.amount.value),
+        category_id: parseInt(form.category_id.value),
+        user_id: 1
+        };
+
+        const isEdit = form.dataset.id;
+        const method = isEdit ? "PUT" : "POST";
+        const url = isEdit ? `/transactions/${form.dataset.id}` : "/transactions";
+
+        fetch(url, {
+        method: method,
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data)
+        })
+        .then(() => {
+            transaksiModal.hide();
+            form.reset();
+            delete form.dataset.id;
+            applyFilters(); 
+        })
+        .catch(err => console.error("Gagal simpan transaksi:", err));
+    });
+
+    let chartInstance;
+
+    function loadSummary() {
+    fetch("/summary")
+        .then(res => res.json())
+        .then(data => {
+        document.getElementById("totalIncome").textContent = "Rp " + data.income.toLocaleString("id-ID");
+        document.getElementById("totalExpense").textContent = "Rp " + data.expense.toLocaleString("id-ID");
+        });
+    }
+
+    function loadChart() {
+    fetch("/chart")
+        .then(res => res.json())
+        .then(data => {
+        const labels = data.map(d => d.month);
+        const income = data.map(d => d.income || 0);
+        const expense = data.map(d => d.expense || 0);
+
+        const ctx = document.getElementById("grafikTransaksi").getContext("2d");
+        if (chartInstance) chartInstance.destroy();
+
+        chartInstance = new Chart(ctx, {
+            type: "bar",
+            data: {
+            labels: labels,
+            datasets: [
+                {
+                label: "Pemasukan",
+                data: income,
+                backgroundColor: "#198754"
+                },
+                {
+                label: "Pengeluaran",
+                data: expense,
+                backgroundColor: "#dc3545"
+                }
+            ]
+            },
+            options: {
+            responsive: true,
+            plugins: {
+                title: {
+                display: true,
+                text: "Perbandingan Income vs Expense per Bulan"
+                }
+            },
+            scales: {
+                y: {
+                beginAtZero: true,
+                ticks: {
+                    callback: val => "Rp " + val.toLocaleString("id-ID")
+                }
+                }
+            }
+            }
+        });
+        });
+    }
+
+    document.addEventListener("DOMContentLoaded", () => {
+    loadSummary();
+    loadChart();
+    });
+    </script>
+</body>
+</html>

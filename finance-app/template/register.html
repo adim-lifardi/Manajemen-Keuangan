@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <title>Register - KeuanganApp</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <style>
+    body {
+      background: linear-gradient(135deg, #20c997, #0d6efd);
+      height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .register-card {
+      background: #fff;
+      padding: 40px;
+      border-radius: 15px;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+      max-width: 400px;
+      width: 100%;
+    }
+    .register-card h4 {
+      margin-bottom: 25px;
+      text-align: center;
+      font-weight: bold;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="register-card">
+    <h4>Daftar Akun Manajemen Keuangan</h4>
+    <form id="registerForm">
+      <div class="mb-3">
+        <label for="name" class="form-label">Nama Lengkap</label>
+        <input type="text" class="form-control" id="name" required>
+      </div>
+      <div class="mb-3">
+        <label for="email" class="form-label">Email</label>
+        <input type="email" class="form-control" id="email" required>
+      </div>
+      <div class="mb-3">
+        <label for="password" class="form-label">Kata Sandi</label>
+        <input type="password" class="form-control" id="password" required>
+      </div>
+      <div class="d-grid mb-3">
+        <button type="submit" class="btn btn-primary">Daftar</button>
+      </div>
+    </form>
+    <div id="registerSuccess" class="alert alert-success d-none">Registrasi berhasil! Silakan login.</div>
+    <div id="registerError" class="alert alert-danger d-none">Email sudah digunakan atau data tidak valid.</div>
+  </div>
+
+  <script>
+    const form = document.getElementById("registerForm");
+    const successAlert = document.getElementById("registerSuccess");
+    const errorAlert = document.getElementById("registerError");
+
+    form.addEventListener("submit", function(e) {
+      e.preventDefault();
+      const data = {
+        name: form.name.value,
+        email: form.email.value,
+        password: form.password.value
+      };
+
+      fetch("/register", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data)
+      })
+      .then(res => res.json())
+      .then(res => {
+        if (res.user) {
+          successAlert.classList.remove("d-none");
+          errorAlert.classList.add("d-none");
+          form.reset();
+          setTimeout(() => {
+            window.location.href = "/login";
+          }, 1500);
+        } else {
+          errorAlert.classList.remove("d-none");
+        }
+      })
+      .catch(() => {
+        errorAlert.classList.remove("d-none");
+      });
+    });
+  </script>
+
+</body>
+</html>
